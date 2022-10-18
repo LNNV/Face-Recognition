@@ -70,21 +70,21 @@ bao_imgae = face_recognition.load_image_file("sample/Bao.jpg")
 bao_face_encoding = face_recognition.face_encodings(bao_imgae)[0]
 
 known_face_encodings = [
-        nv_face_encoding,
-        dv_face_encoding,
-        bao_face_encoding,
-        ky_face_encoding,
-        van_face_encoding
-        ]
+    nv_face_encoding,
+    dv_face_encoding,
+    bao_face_encoding,
+    ky_face_encoding,
+    van_face_encoding
+]
 
 
 known_face_names = [
-        "N.Vu",
-        "D.Vu",
-        "Bao",
-        "Ky",
-        "Van"
-        ]
+    "N.Vu",
+    "D.Vu",
+    "Bao",
+    "Ky",
+    "Van"
+]
 
 
 image_name = 'group2.jpg'
@@ -170,6 +170,7 @@ def faceRecognize():
 
     panel.configure(image=imgtk)
     panel.image = imgtk
+
 
 menubar = Menu(root)
 filemenu = Menu(menubar, tearoff=0)
