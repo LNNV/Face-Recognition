@@ -10,77 +10,47 @@ import os
 import pickle
 
 def noise_reduce(img):
-    ##figure_size = 5
-    ##new_image = cv2.GaussianBlur(image, (figure_size, figure_size),0)
-    ##new_image = cv2.medianBlur(img, figure_size)
-    new_image = cv2.fastNlMeansDenoisingColored(img, None, 7, 7, 7, 21)
+    new_image = cv2.fastNlMeansDenoisingColored(img, None, 15, 15, 7, 21)
     return new_image
 
 def detect_edge(img):
     new_image = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
-    new_image = cv2.Canny(new_image,40,140)
+    new_image = cv2.Canny(new_image,80,140)
     return new_image
-
-# def detect_face(img):
-#     face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-#     faces = face_cascade.detectMultiScale(image_gray, 1.1, 5)
-#     new_image = copy.deepcopy(image_less_noise)
-#     for (x, y, w, h) in faces:
-#         cv2.rectangle(new_image, (x, y), (x+w, y+h), (255, 0, 0), 2)
-#     return new_image
 
 def recognition_face(img):
     face_locations = face_recognition.face_locations(img)
     face_encodings = face_recognition.face_encodings(img, face_locations)
     face_names = []
     for face_encoding in face_encodings:
-        matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
+        matches = face_recognition.compare_faces(known_face_encodings, face_encoding, 0.4)
         name = ""
-        # if True in matches:
-        #    first_match_index = matches.index(True)
-        #    name = known_face_names[first_match_index]
         face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
         best_match_index = np.argmin(face_distances)
-        if matches[best_match_index] and face_distances[best_match_index] < 0.4:
+        if matches[best_match_index]:
             name = known_face_names[best_match_index]
+
         face_names.append(name)
-    new_image = copy.deepcopy(img)
+    face_detect_image = copy.deepcopy(img)
+    face_recognize_image = copy.deepcopy(img)
     for (top, right, bottom, left), name in zip(face_locations, face_names):
-        cv2.rectangle(new_image, (left, top), (right, bottom), (0, 0, 255), 2)
+        cv2.rectangle(face_detect_image, (left, top), (right, bottom), (0, 0, 255), 2)
+        cv2.rectangle(face_recognize_image, (left, top), (right, bottom), (0, 0, 255), 2)
         font = cv2.FONT_HERSHEY_DUPLEX
-        cv2.putText(new_image, name, (left, bottom + 28), font, 1.0, (0, 0, 255), 2)
-    return new_image
+        cv2.putText(face_recognize_image, name, (left, bottom + 50), font, 2.0, (0, 0, 255), 2)
+    return face_detect_image, face_recognize_image
 
-ky_imgae = face_recognition.load_image_file("sample/Ky.jpg")
-ky_face_encoding = face_recognition.face_encodings(ky_imgae)[0]
 
-nv_imgae = face_recognition.load_image_file("sample/NV.jpg")
-nv_face_encoding = face_recognition.face_encodings(nv_imgae)[0]
 
-dv_imgae = face_recognition.load_image_file("sample/DV.jpg")
-dv_face_encoding = face_recognition.face_encodings(dv_imgae)[0]
-
-bao_imgae = face_recognition.load_image_file("sample/Bao.jpg")
-bao_face_encoding = face_recognition.face_encodings(bao_imgae)[0]
-
-thai_imgae = face_recognition.load_image_file("sample/Thai.jpg")
-thai_face_encoding = face_recognition.face_encodings(thai_imgae)[0]
-
-known_face_encodings = [
-    nv_face_encoding,
-    dv_face_encoding,
-    bao_face_encoding,
-    ky_face_encoding,
-    thai_face_encoding
-]
+known_face_encodings = pickle.load(open('face_encodings.txt', 'rb'))
 
 
 known_face_names = [
-    "N.Vu",
-    "D.Vu",
-    "Bao",
-    "Ky",
-    "Thai"
+    "N.Vu", "N.Vu", "N.Vu", "N.Vu", "N.Vu",
+    "D.Vu", "D.Vu", "D.Vu", "D.Vu", "D.Vu",
+    "Bao", "Bao", "Bao", "Bao", "Bao",
+    "Ky", "Ky", "Ky", "Ky", "Ky",
+    "Thai", "Thai", "Thai", "Thai", "Thai"
 ]
 
 
@@ -106,23 +76,11 @@ def reload_processing_data():
 
     image_less_noise = noise_reduce(image_rgb)
     image_detect_edge = detect_edge(image_less_noise)
-    # image_detect_face = detect_face(image_rgb)
-    image_recognize_face = recognition_face(image_less_noise)
+    image_detect_face, image_recognize_face = recognition_face(image_less_noise)
 
 
 reload_processing_data()
 
-# plt.subplot(121),plt.imshow(image_rgb)
-# plt.subplot(121),plt.imshow(image_recognize_face)
-# plt.show()
-
-# cv2.imshow("original", cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR))
-# cv2.imshow("gray", image_gray)
-# cv2.imshow("noise reduce", cv2.cvtColor(image_less_noise, cv2.COLOR_RGB2BGR))
-# cv2.imshow("edge detect", image_detect_edge)
-# cv2.imshow("face detect", cv2.cvtColor(image_detect_face, cv2.COLOR_RGB2BGR))
-# cv2.imshow("face recognize", cv2.cvtColor(image_recognize_face, cv2.COLOR_RGB2BGR))
-# cv2.waitKey(0)
 
 root = Tk()
 
@@ -172,6 +130,14 @@ def edgeDetect():
     panel.configure(image=imgtk)
     panel.image = imgtk
 
+def faceDetect():
+    im = Image.fromarray(image_detect_face)
+    width, height = im.size
+    imgtk = ImageTk.PhotoImage(image=im.resize([int(600 * width / height), 600]))
+
+    panel.configure(image=imgtk)
+    panel.image = imgtk
+
 
 def faceRecognize():
     im = Image.fromarray(image_recognize_face)
@@ -193,6 +159,7 @@ actions = Menu(menubar, tearoff=0)
 actions.add_command(label="Original", command=original)
 actions.add_command(label="Noise Reduce", command=noiseReduce)
 actions.add_command(label="Edge Detect", command=edgeDetect)
+actions.add_command(label="Face Detect", command=faceDetect)
 actions.add_command(label="Face Recognize", command=faceRecognize)
 menubar.add_cascade(label="Actions", menu=actions)
 
