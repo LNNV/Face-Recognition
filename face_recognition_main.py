@@ -10,7 +10,11 @@ import os
 import pickle
 
 def noise_reduce(img):
-    new_image = cv2.fastNlMeansDenoisingColored(img, None, 15, 15, 7, 21)
+    new_image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    new_image = cv2.medianBlur(new_image, 3)
+    new_image = cv2.cvtColor(new_image, cv2.COLOR_HSV2BGR)
+    new_image = cv2.fastNlMeansDenoisingColored(new_image, None, 7, 7, 7, 21)
+    new_image = cv2.cvtColor(new_image, cv2.COLOR_BGR2RGB)
     return new_image
 
 def detect_edge(img):
@@ -37,7 +41,7 @@ def recognition_face(img):
         cv2.rectangle(face_detect_image, (left, top), (right, bottom), (0, 0, 255), 2)
         cv2.rectangle(face_recognize_image, (left, top), (right, bottom), (0, 0, 255), 2)
         font = cv2.FONT_HERSHEY_DUPLEX
-        cv2.putText(face_recognize_image, name, (left, bottom + 50), font, 2.0, (0, 0, 255), 2)
+        cv2.putText(face_recognize_image, name, (left, bottom + 50), font, 1.5, (0, 0, 255), 2)
     return face_detect_image, face_recognize_image
 
 
@@ -74,7 +78,7 @@ def reload_processing_data():
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    image_less_noise = noise_reduce(image_rgb)
+    image_less_noise = noise_reduce(image)
     image_detect_edge = detect_edge(image_less_noise)
     image_detect_face, image_recognize_face = recognition_face(image_less_noise)
 
